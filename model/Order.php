@@ -60,9 +60,20 @@ class Order extends Connection
         if (!$orderId = $this->isTableHaveOrder($tableId)) {
             return $items;
         }
-        $orderItems = $this->con->query("SELECT *, COUNT(*) as total FROM order_products WHERE order_id = " . $orderId . " GROUP BY product_name")->fetchAll(PDO::FETCH_ASSOC);
-       // $orderItems = $this->con->query("SELECT * FROM order_products WHERE order_id = " . $orderId)->fetchAll(PDO::FETCH_ASSOC);
-        //die(var_dump($orderItems));
+        // Ürünleri grupla ve miktarını say
+        $orderItems = $this->con->query("
+            SELECT 
+                MIN(id) as id,
+                product_id,
+                product_name,
+                product_price,
+                COUNT(*) as total,
+                order_id
+            FROM order_products 
+            WHERE order_id = " . $orderId . " 
+            GROUP BY product_id, product_name, product_price
+        ")->fetchAll(PDO::FETCH_ASSOC);
+        
         return $orderItems;
     }
     
@@ -73,9 +84,24 @@ class Order extends Connection
 
     public function deleteProductFromOrder($orderProductId)
     {
-        // DELETE FROM order_products WHERE id = $orderProductId
-        $delete = $this->con->exec("DELETE FROM order_products WHERE id = " . $orderProductId);
-        if ($delete > 0) return $delete;
+        // Önce bu ürünün bilgilerini al
+        $product = $this->con->query("SELECT product_id, order_id FROM order_products WHERE id = " . $orderProductId)->fetch(PDO::FETCH_ASSOC);
+        
+        if ($product) {
+            // Aynı üründen kaç tane var?
+            $count = $this->con->query("SELECT COUNT(*) as total FROM order_products WHERE product_id = " . $product['product_id'] . " AND order_id = " . $product['order_id'])->fetch(PDO::FETCH_ASSOC);
+            
+            if ($count['total'] > 1) {
+                // Birden fazla varsa sadece bir tanesini sil
+                $delete = $this->con->exec("DELETE FROM order_products WHERE id = " . $orderProductId . " LIMIT 1");
+            } else {
+                // Tek tane varsa hepsini sil
+                $delete = $this->con->exec("DELETE FROM order_products WHERE product_id = " . $product['product_id'] . " AND order_id = " . $product['order_id']);
+            }
+            
+            if ($delete > 0) return $delete;
+        }
+        
         return false;
     }
 
@@ -153,6 +179,47 @@ class Order extends Connection
     public function active($orderId)
     {
         return $this->changeStatus($orderId, 1);
+    }
+    
+    public function getTodayOrders()
+    {
+        $today = date('Y-m-d');
+        $stmt = $this->con->prepare("SELECT * FROM orders WHERE DATE(created_at) = :today");
+        $stmt->execute(['today' => $today]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function getOrdersByTable($tableId)
+    {
+        $stmt = $this->con->prepare("SELECT * FROM order_products WHERE order_id IN (SELECT id FROM orders WHERE table_id = :tableid AND status = 1)");
+        $stmt->execute(['tableid' => $tableId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function getActiveOrderByTable($tableId)
+    {
+        $stmt = $this->con->prepare("SELECT * FROM orders WHERE table_id = :tableid AND status = 1 LIMIT 1");
+        $stmt->execute(['tableid' => $tableId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    public function moveOrderToTable($orderId, $newTableId)
+    {
+        $stmt = $this->con->prepare("UPDATE orders SET table_id = :newtable WHERE id = :orderid");
+        return $stmt->execute(['newtable' => $newTableId, 'orderid' => $orderId]);
+    }
+    
+    public function mergeOrders($sourceOrderId, $targetOrderId)
+    {
+        // Kaynak siparişin ürünlerini hedef siparişe taşı
+        $stmt = $this->con->prepare("UPDATE order_products SET order_id = :target WHERE order_id = :source");
+        return $stmt->execute(['target' => $targetOrderId, 'source' => $sourceOrderId]);
+    }
+    
+    public function closeOrder($orderId)
+    {
+        $stmt = $this->con->prepare("UPDATE orders SET status = 0 WHERE id = :orderid");
+        return $stmt->execute(['orderid' => $orderId]);
     }
 
     // sipariş ekleme

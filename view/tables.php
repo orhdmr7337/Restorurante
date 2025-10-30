@@ -8,6 +8,10 @@
             <p class="pull-left"> Hoşgeldin <b><?=$userInfo["fullname"]; ?>,</b></p>
             <a href="admin.php" class="btn btn-warning">Admin Paneli</a>
             <a href="products.php" class="btn btn-warning">Ürün Yönetimi</a>
+            <a href="materials.php" class="btn btn-success">Stok Yönetimi</a>
+            <a href="suppliers.php" class="btn btn-info">Tedarikçiler</a>
+            <a href="purchases.php" class="btn btn-primary">Alış Faturaları</a>
+            <a href="finance.php" class="btn btn-danger">Muhasebe</a>
             <label class="pull-right"><a href="<?=$sitePath?>logout.php?logOut=true"><i class="glyphicon glyphicon-log-out"></i> Çıkış Yap</a></label>
         </div>
 
@@ -17,6 +21,9 @@
         <div class="row text-center">
             <p class="pull-left"> Hoşgeldin <b><?=$userInfo["fullname"]; ?>,</b></p>
             <a href="products.php" class="btn btn-warning">Ürün Yönetimi</a>
+            <a href="materials.php" class="btn btn-success">Stok Yönetimi</a>
+            <a href="suppliers.php" class="btn btn-info">Tedarikçiler</a>
+            <a href="finance.php" class="btn btn-danger">Muhasebe</a>
             <label class="pull-right"><a href="<?=$sitePath?>logout.php?logOut=true"><i class="glyphicon glyphicon-log-out"></i> Çıkış Yap</a></label>
         </div>
         <?php

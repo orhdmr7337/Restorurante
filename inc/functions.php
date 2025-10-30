@@ -1,9 +1,15 @@
 <?php
 
-function __autoload($className)
-{
-    require_once "model/" . $className . ".php";
-}
+spl_autoload_register(function ($className) {
+    // API klasöründen çağrılıyorsa
+    if (file_exists("../model/" . $className . ".php")) {
+        require_once "../model/" . $className . ".php";
+    }
+    // Ana klasörden çağrılıyorsa
+    elseif (file_exists("model/" . $className . ".php")) {
+        require_once "model/" . $className . ".php";
+    }
+});
 function dd($var)
 {
     echo "<pre>";

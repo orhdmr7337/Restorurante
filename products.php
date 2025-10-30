@@ -1,8 +1,8 @@
 <?php
 require "inc/global.php";
-
 require "controller/products.php";
 
-require "view/_header.php";
-require "view/products.php";
-require "view/_footer.php";
+$materialObj = new Material();
+$lowStockCount = count($materialObj->getLowStock());
+
+require "view/products_layout.php";

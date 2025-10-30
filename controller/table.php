@@ -1,14 +1,17 @@
 <?php
+require_once "inc/global.php";
 
+$tblObj = new Table();
 $usrObj = new User();
+$menuObj = new Menu();
+$orderObj = new Order();
+
 if($usrObj->isLoggedIn() == "")
 {
     $usrObj->redirect('login.php');
 }
-$tblObj = new Table();
-$table = $tblObj->getOne($_GET['id']);
-if(! $table) die("Boyle bir masa yok.");
-$menuObj = new Menu();
+
+$tableId = $_GET['id'];
+$table = $tblObj->getTable($tableId);
 $menu = $menuObj->getFullMenu();
-$orderObj = new Order();
-$orderedItems = $orderObj->getTableOrderedItems($table['id']);
+$orders = $orderObj->getOrdersByTable($tableId);

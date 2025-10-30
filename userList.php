@@ -1,8 +1,9 @@
 <?php
 require "inc/global.php";
+require "controller/userList.php";
 
-require "controller/admin.php";
+require_once "model/Material.php";
+$materialObj = new Material();
+$lowStockCount = count($materialObj->getLowStock());
 
-require "view/_header.php";
-require "view/userList.php";
-require "view/_footer.php";
+require "view/userList_layout.php";

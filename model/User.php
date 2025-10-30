@@ -16,21 +16,23 @@ class User extends Connection
         return $getAllUsersCount;
    }
 
-    public function registerUser($username,$password,$email,$fullname,$userPosition){
+    public function registerUser($username,$password,$email,$fullname,$userPosition, $roleId = null){
         //Veritabanında aynı username veya email varsa false döndürecek
         $isThereUser = $this->con->prepare("SELECT * FROM users WHERE username=:username OR email=:email LIMIT 1");
         $isThereUser->execute(array(':username'=>$username, ':email'=>$email));
         if($isThereUser->rowCount() > 0) {
-           // return false;
-           return redirect('userList.php?msg=errorExist'); //Hatalı kullanım düzeltilecek
+           return false;
         }else {
-        $UserRegister = $this->con->prepare("INSERT INTO users(username,password,email,fullname,user_position) VALUES(:username, :password, :email, :fullname, :userPosition )");
-        //PDOStatement->bindParam — Bir değiştirgeyi belirtilen "değişken"le ilişkilendirir
+        // Şifreyi hash'le (güvenlik)
+        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+        
+        $UserRegister = $this->con->prepare("INSERT INTO users(username,password,email,fullname,user_position,role_id) VALUES(:username, :password, :email, :fullname, :userPosition, :roleId)");
         $UserRegister->bindParam(":username", $username);
-        $UserRegister->bindParam(":password", $password);
+        $UserRegister->bindParam(":password", $hashedPassword);
         $UserRegister->bindParam(":email", $email);
         $UserRegister->bindParam(":fullname", $fullname);
         $UserRegister->bindParam(":userPosition", $userPosition);
+        $UserRegister->bindParam(":roleId", $roleId);
         $UserRegister->execute();
         }
 
@@ -60,20 +62,30 @@ class User extends Connection
    // public function login($username,$password){ // Sadece kullanıcı adı ve şifre kontrol etmek istenirse
     public function login($username,$password,$email){
        $isThereUser = $this->con->prepare("SELECT * FROM users WHERE username=:username OR email=:email LIMIT 1");
-
-        //$isThereUser = $this->con->prepare("SELECT * FROM users WHERE username=:username LIMIT 1"); // Bu kısım sadece kullanıcı adı kullanılacaksa
-
         $isThereUser->execute(array(':username'=>$username, ':email'=>$email));
-
-       // $isThereUser->execute(array(':username'=>$username)); // sadece kullanıcı adı kullanılacaksa
 
         $userRow=$isThereUser->fetch(PDO::FETCH_ASSOC);
         if($isThereUser->rowCount() > 0)
         {
-            //if(password_verify($password, $userRow['password'])) // php 5.5 üzeri desteklemektedir.
-          if($password == $userRow['password'])
+            // Önce bcrypt hash kontrolü yap
+            if(password_verify($password, $userRow['password'])) {
+                $_SESSION['user_session'] = $userRow['id'];
+                $_SESSION['user_role'] = $userRow['role_id'];
+                $_SESSION['user_position'] = $userRow['user_position'];
+                return true;
+            }
+            // Eski MD5 şifreler için geriye dönük uyumluluk
+            elseif($password == $userRow['password'] || md5($password) == $userRow['password'])
             {
                 $_SESSION['user_session'] = $userRow['id'];
+                $_SESSION['user_role'] = $userRow['role_id'];
+                $_SESSION['user_position'] = $userRow['user_position'];
+                
+                // Şifreyi yeni hash ile güncelle
+                $newHash = password_hash($password, PASSWORD_BCRYPT);
+                $updateStmt = $this->con->prepare("UPDATE users SET password = :password WHERE id = :id");
+                $updateStmt->execute([':password' => $newHash, ':id' => $userRow['id']]);
+                
                 return true;
             }
             else
@@ -81,8 +93,7 @@ class User extends Connection
                 return false;
             }
         }
-        
-
+        return false;
     }
 
     public function isLoggedIn()

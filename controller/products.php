@@ -1,32 +1,21 @@
 <?php
-$usrObj = new User();
-if ($usrObj->isLoggedIn() == "" ) {
-    $usrObj->redirect('login.php');
-}
+require_once "model/Menu.php";
+require_once "model/User.php";
+
 $menuObj = new Menu();
-$menu = $menuObj->getFullMenu();
-$categories = $menuObj->getAllCategories();
-$catValue = "";
-$catTask = "catAdd";
-$catPostIdInput = "";
-$productTask = "productAdd";
-$productPostIdInput = "";
-$productName = "";
-$productPrice = "";
-$productCatId = 0;
-if (isset($_GET["task"])) {
-    if ($_GET["task"] == "catEdit") {
-        $getCat = $menuObj->getCategory($_GET["catId"]);
-        $catValue = "value='$getCat[name]'";
-        $catTask = "catEdit";
-        $catPostIdInput = '<input type="hidden" name="catId" value="' . $getCat["id"] . '" />';
-    }
-    if ($_GET["task"] == "productEdit") {
-        $getProduct = $menuObj->getProduct($_GET["productId"]);
-        $productTask = "productEdit";
-        $productPostIdInput = '<input type="hidden" name="productId" value="' . $getProduct["id"] . '" />';
-        $productName = "value='$getProduct[name]'";
-        $productPrice = "value='$getProduct[price]'";
-        $productCatId = $getProduct["category_id"];
-    }
+$usrObj = new User();
+
+if($usrObj->isLoggedIn() == "") {
+    redirect('login.php');
 }
+
+$userId = $_SESSION['user_session'];
+$userInfo = $usrObj->getOneUser($userId);
+
+// Sadece admin ve yetkili erişebilir
+if ($userInfo['user_position'] != 1 && $userInfo['user_position'] != 2) {
+    redirect('index.php');
+}
+
+$products = $menuObj->getAllProducts();
+$categories = $menuObj->getAllCategories();

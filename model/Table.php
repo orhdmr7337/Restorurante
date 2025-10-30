@@ -10,6 +10,15 @@ class Table extends Connection
         $table = $this->con->query("SELECT * FROM tables WHERE id = ". $tableId)->fetch(PDO::FETCH_ASSOC);
         return $table;
     }
+    
+    public function getTable($tableId){
+        return $this->getOne($tableId);
+    }
+    
+    public function getActiveTables(){
+        $tables = $this->con->query("SELECT * FROM tables WHERE status = 1");
+        return $tables;
+    }
 
     private function changeStatus($tableId, $status){
         $chst = $this->con->query("UPDATE tables SET status=".$status." WHERE id=".$tableId);

@@ -14,7 +14,7 @@ if(isset($_POST['submit']) || isset($_GET['task']))
         switch ($_REQUEST['task']) {
             case "login":
                 $username = fixTags(trim($_POST['username'])); //Hem email hem kullanıcı adı ile giriş için
-                $password = fixTags(trim(md5(sha1($_POST['password']))));
+                $password = fixTags(trim($_POST['password'])); // Şifreyi düz metin olarak gönder, User.php'de hash kontrolü yapılacak
                 $email = fixTags(trim($_POST['username'])); //Hem email hem kullanıcı adı ile giriş için
                 if($usrObj->login($username,$password,$email))
                 {
@@ -38,7 +38,7 @@ if(isset($_POST['submit']) || isset($_GET['task']))
             case "register":
                 //Formdan gelen değerler değişkenlere atandı
                 $username = fixTags(trim($_POST['username'])); //Hem email hem kullanıcı adı ile giriş için
-                $password = fixTags(trim(md5(sha1($_POST['password']))));
+                $password = fixTags(trim($_POST['password']));
                 $mail = fixTags(trim($_POST['email'])); //yeni kayıtta email
                 $fullname = fixTags(trim($_POST['name']));
                 $userPosition = fixTags(trim($_POST['userPosition']));

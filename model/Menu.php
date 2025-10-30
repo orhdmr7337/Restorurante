@@ -114,6 +114,15 @@ class Menu extends Connection
         $getAllCatCount = $this->con->query('SELECT COUNT(id) FROM product_categories')->fetch(PDO::FETCH_ASSOC);
         return $getAllCatCount;
     }
+    
+    public function getAllProducts(){
+        $stmt = $this->con->query("
+            SELECT p.*, pc.name as category_name 
+            FROM products p 
+            LEFT JOIN product_categories pc ON p.category_id = pc.id
+        ");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
     // Kategori düzenleme
     // Kategori silme
